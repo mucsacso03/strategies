@@ -109,8 +109,8 @@ def dd_make_charts(time_frames_list, instruments, data, quiet):
             # print('Making chart: ' + instrument.name)
             fxdata = data.query('Instrument == "' + instrument.name + '" and Period == ' + str(TF.value)).tail(
                 CANDLE_COUNT)
-            fxdata['ma_20'] = ma(fxdata['Close'], 20)
-            fxdata['ema_200'] = ema(fxdata['Close'], 200)
+            fxdata['ma_20'] = moving_average(fxdata['Close'], 20)
+            fxdata['ema_200'] = exponential_moving_average(fxdata['Close'], 200)
 
             signals.append(dimbesdombos(fxdata, True, instrument.name, TF, quiet))
             signals.append(dimbesdombos(fxdata, False, instrument.name, TF, quiet))

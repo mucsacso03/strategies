@@ -5,7 +5,7 @@ from constants import DATA_PATH
 from run_timer import *
 
 
-def sc_get_instruments(filename='instruments.txt'):
+def get_instruments(filename='instruments.txt'):
     start_time = cmd_output_start('Importing instruments...')
 
     file = open(filename, "r")
@@ -23,7 +23,7 @@ def sc_get_instruments(filename='instruments.txt'):
     return instrument_list
 
 
-def dd_import_data():
+def import_data():
     start_time = cmd_output_start('Importing data...')
 
     file_locked = True
@@ -35,10 +35,9 @@ def dd_import_data():
             file_locked = False
         except:
             pass
-    # print(fxdata)
 
-    # print(data)
     # print(data)
 
     cmd_output_end(start_time)
+
     return data
