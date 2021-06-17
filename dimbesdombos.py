@@ -11,40 +11,33 @@ def dimbesdombos(fxdata, long, instrument, timeframe, quiet):
     if not quiet: start_time = cmd_output_start('Calculating DimbesDombos for ' + instrument + '...')
 
     peak_or_valleys = []
-    signals = []
     ma_20 = fxdata['ma_20']
     ema_200 = fxdata['ema_200']
     trend_candle_number = 150
 
-    # lt(a,b) = a < b
-    # gt(a,b) = a > b
-    if long:
-        ma_1 = fxdata['High']
-        relation_operator = operator.lt
-
-    else:
-        ma_1 = fxdata['Low']
-        relation_operator = operator.gt
+    ma_1, relation_operator = get_operators(long, fxdata)
 
     tmp_peak = None
     tmp_first_crossing = None
     tmp_value = None
     init = True
     for row_id, value in ma_1.iteritems():
-        # Ha kezdésnek az ma_20 felett van akkor megvárjuk míg alá megy
-        if init and relation_operator(value, ma_20[row_id]):  # (value < ma_20[row_id]):
+        # Ha kezdésnek az ma_20 felett/alatt van akkor megvárjuk míg alá/felé megy
+        if init and relation_operator(value, ma_20[row_id]):  # (value < ma_20[row_id]): (long)
             init = False
 
-        elif relation_operator(ma_20[row_id], value):  # value > ma_20[row_id]:
+        # Ha az ma_20 felett/alatt van, akkor keressük a csúcsot/völgyet
+        elif relation_operator(ma_20[row_id], value):  # value > ma_20[row_id]: (long)
             if tmp_peak is None:
                 tmp_peak = row_id
                 tmp_value = value
                 tmp_first_crossing = row_id
-            elif tmp_peak is not None and relation_operator(ma_1[tmp_peak], value):  # (ma_1[tmp_peak] < value):
+            elif tmp_peak is not None and relation_operator(ma_1[tmp_peak], value):  # (ma_1[tmp_peak] < value): (long)
                 tmp_peak = row_id
                 tmp_value = value
 
-        elif tmp_peak is not None and relation_operator(value, ma_20[row_id]):  # value < ma_20[row_id]:
+        # Ha befejeződött a szakasz mert alá/felé ment az ma_20-nak, akkor véglegesítjük a dombot/völgyet
+        elif tmp_peak is not None and relation_operator(value, ma_20[row_id]):  # value < ma_20[row_id]: (long)
             if long:
                 orientation = Trend.Long
             else:
@@ -56,6 +49,33 @@ def dimbesdombos(fxdata, long, instrument, timeframe, quiet):
             tmp_first_crossing = None
 
     # első szűrés. x gyertyával visszanézni a ema_200 irányultságát
+    peak_or_valleys = trend_with_x_candle_before_crossing(peak_or_valleys, fxdata, ema_200, trend_candle_number)
+
+    # második szűrés. Nagy és kis domb/volgy távolságában vizsgálni az ema_200-at
+    trend_between_big_and_small_dd(peak_or_valleys, ema_200)
+
+    signals = select_signals(peak_or_valleys, relation_operator)  # Kis dombok/volgyek kiválasztása
+
+    if not quiet: cmd_output_end(start_time)
+
+    return signals
+
+
+def get_operators(long, fxdata):
+    # lt(a,b) = a < b
+    # gt(a,b) = a > b
+    if long:
+        ma_1 = fxdata['High']
+        relation_operator = operator.lt
+
+    else:
+        ma_1 = fxdata['Low']
+        relation_operator = operator.gt
+
+    return ma_1, relation_operator
+
+
+def trend_with_x_candle_before_crossing(peak_or_valleys, fxdata, ema_200, trend_candle_number):
     for dd in peak_or_valleys:
         second_crossing_index = fxdata.index.get_loc(dd.second_crossing_timestamp)
         second_crossing_value = ema_200[dd.second_crossing_timestamp]
@@ -71,8 +91,10 @@ def dimbesdombos(fxdata, long, instrument, timeframe, quiet):
                 dd.trend = Trend.Short
             if previous_trend_candle_value < second_crossing_value:
                 dd.trend = Trend.Long
+    return peak_or_valleys
 
-    # második szűrés. Nagy és kis domb/volgy távolságában vizsgálni az ema_200-at
+
+def trend_between_big_and_small_dd(peak_or_valleys, ema_200):
     for i in range(0, len(peak_or_valleys) - 1):
         first = peak_or_valleys[i]
         second = peak_or_valleys[i + 1]
@@ -83,20 +105,16 @@ def dimbesdombos(fxdata, long, instrument, timeframe, quiet):
         if first_crossing_value < second_crossing_value:
             second.sector_trend = Trend.Long
 
-    # Kis dombok/volgyek kiválasztása
+
+def select_signals(peak_or_valleys, relation_operator):
+    signals = []
     for i in range(len(peak_or_valleys) - 2, len(peak_or_valleys) - 1):
         if len(peak_or_valleys) == 2:
             first = peak_or_valleys[i]
             second = peak_or_valleys[i + 1]
             if relation_operator(second.value, first.value):  # first.value > second.value:
                 signals.append(second)
-
-    if not quiet: cmd_output_end(start_time)
-    # print(signals)
     return signals
-
-
-
 
 
 def dd_make_charts(time_frames_list, instruments, data, quiet):
