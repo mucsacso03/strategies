@@ -1,7 +1,7 @@
 from datetime import datetime
 from decimal import Decimal
 
-from enum_classes import *
+from system_components.enum_classes import *
 
 
 class BoundingBox():

@@ -2,8 +2,8 @@ import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
-from constants import ADMIN_EMAIL
-from run_timer import cmd_output_end, cmd_output_start
+from system_components.constants import ADMIN_EMAIL
+from system_components.run_timer import cmd_output_end, cmd_output_start
 
 
 def send_email(mail_content, subject, user=False, debug=True):

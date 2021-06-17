@@ -1,7 +1,7 @@
 import pandas as pd
 
-from Instrument import *
-from constants import DATA_PATH
+from system_components.Instrument import *
+from system_components.constants import DATA_PATH
 from system_components.run_timer import *
 
 
