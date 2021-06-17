@@ -7,7 +7,7 @@ def sc_get_instruments(filename = 'instruments.txt'):
     file = open(filename, "r")
     content = file.read().split("\n")
 
-    content = ["GBPUSD"]
+    #content = ["GBPUSD"]
 
     instrument_list = []
     for inst in content:

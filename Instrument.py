@@ -50,7 +50,7 @@ class Instrument:
 
     def get_signals(self):
         for i in self.idosikok:
-            if i.signal != None and i.timestamp != None:
+            if i.signal != None and i.peak_timestamp != None:
                 try:
                     return self.name + ": " + str(i.periodname) + " - " + str(
                         Signals(int(i.signal)).name)  # + " | " + datetime.datetime.fromtimestamp(i.timestamp).strftime(
@@ -61,10 +61,10 @@ class Instrument:
 
     def print_signals(self):
         for i in self.idosikok:
-            if i.signal != None and i.timestamp != None:
+            if i.signal != None and i.peak_timestamp != None:
                 try:
                     print(self.name + ": " + str(i.periodname) + " - " + str(
-                        Signals(int(i.signal)).name) + " | " + datetime.fromtimestamp(i.timestamp).strftime(
+                        Signals(int(i.signal)).name) + " | " + datetime.fromtimestamp(i.peak_timestamp).strftime(
                         '%Y-%m-%d %H:%M:%S'))
                 except Exception as e:
                     print(e)

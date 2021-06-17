@@ -5,6 +5,10 @@ class Signals(enum.IntEnum):
     Sell = 0
     Buy = 1
 
+class Trend(enum.IntEnum):
+    Long = 1
+    Short = 0
+
 
 class TimeFrames(enum.IntEnum):
     # M1 = 1
