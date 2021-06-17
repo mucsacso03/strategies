@@ -1,10 +1,10 @@
-from secondtouch import *
+from dimbesdombos import dd_run
 
 
 
 
 if __name__ == '__main__':
-    sc_run(TimeFrames.H1)
+    dd_run()
 
 
 

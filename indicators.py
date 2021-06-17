@@ -19,7 +19,5 @@ def bb(data, ma, window, deviation):
 #         data['upper_bb_' + str(i)], data['lower_bb_' + str(i)] = bb(data['Close'], data['ma_20'], 20, i)
 #
 #
-# def ema(period):
-#     global data
-#
-#     data['ema_' + str(period)] = data['Close'].ewm(span=period, adjust=False).mean()
+def ema(data, period):
+        return data.ewm(span=period, adjust=False).mean()

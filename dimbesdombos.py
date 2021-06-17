@@ -1,187 +1,133 @@
 import mplfinance as mpf
 import numpy as np
 import pandas as pd
+from pandas._libs.tslibs.timestamps import Timestamp
 
 from Instrument import *
 from enum_classes import *
 from indicators import *
 from run_timer import *
 from init import sc_get_instruments
+import operator
 
 path = 'C:\\Users\\David\\AppData\\Roaming\\MetaQuotes\\Terminal\\9A88166CEDA39D24B9AAA705731B4583\\MQL4\\Files\\fxprimus_data_simple.csv'
 test_path = 'C:\\Users\\David\\AppData\\Roaming\\MetaQuotes\\Terminal\\9A88166CEDA39D24B9AAA705731B4583\\MQL4\\Files\\fxprimus_data_GBPUSD_h1.csv'
 charts_path = 'C:\\Users\\David\\PycharmProjects\\dimbesdombos\\robotcharts\\'
 cropped_charts_path = 'C:\\Users\\David\\PycharmProjects\\dimbesdombos\\cropped_charts\\'
-data = ""
+data: pd
 instruments = []
-candle_count = 70
+candle_count = 210
+picture_width = 24
+picture_height = 5.75
 chart_time_frames = [TimeFrames.H1
                      # , TimeFrames.H1, TimeFrames.D1, TimeFrames.M30
                      ]
+class Dimbesdombos():
+
+    def __init__(self, timestamp, value):
+        self.timestamp = timestamp
+        self.value = value
 
 
+def dimbesdombos(long):
+    global data
+    peaks = []
+    signals = []
+    ma_20 = data['ma_20']
+    # lt(a,b) = a < b
+    # gt(a,b) = a > b
+    nagy = ""
+    kicsi = ""
 
 
-def second_touch_upper(data):
-    signal = []
-    previous = -1.0
-    bb_2_touch = data['above_bb_2']
-    high = data['High']
-    low = data['Low']
-    above_sma_20 = data['above_sma_20']
+    if long:
+        ma_1 = data['High']
+        relation_operator = operator.lt
+        chart_operator = operator.add
+        nagy = 'domb_m'
+        kicsi = 'domb'
 
-    first_touch = None
-    valley = None
-    valley_inc = 0
-    inc = 0
-    for row_id, value in bb_2_touch.iteritems():
-        #print(str(inc) + " - " + str(valley_inc) + " - " + str(len(signal)))
+    else:
+        ma_1 = data['Low']
+        relation_operator = operator.gt
+        chart_operator = operator.sub
+        nagy = 'volgy_m'
+        kicsi = 'volgy'
 
-        # Ha a van olyan gyertya ami a sma_20 alá zár akkor már nem lehet second touch
-        if not above_sma_20[row_id]:
-            first_touch = None
-            valley = None
-            signal.append(None)
+    tmp_peak = None
+    tmp_value = None
+    init = True
+    for row_id, value in ma_1.iteritems():
+        # Ha kezdésnek az ma_20 felett van akkor megvárjuk míg alá megy
+        if init and relation_operator(value,ma_20[row_id]):    #(value < ma_20[row_id]):
+            init = False
 
-        # Ha bb_20_2 felett van és az sma_20 felett is
-        elif value and above_sma_20[row_id]:
-            # ha még nincs first touch akkor beírjuk
-            if first_touch is None:
-                first_touch = row_id
-                signal.append(None)
+        elif relation_operator(ma_20[row_id], value):   #value > ma_20[row_id]:
+            if tmp_peak is None:
+                tmp_peak = row_id
+                tmp_value = value
+            elif tmp_peak is not None and relation_operator(ma_1[tmp_peak], value):      #(ma_1[tmp_peak] < value):
+                tmp_peak = row_id
+                tmp_value = value
 
-            # ha van second touch és van völgyünk akkor beírjuk a jelzést és a second toucht first touchnak regisztráljuk
-            elif valley is not None:
-                # print(valley, end=" ")
-                # print(valley_inc)
-                #signal.append(low[valley] * 0.9999)
-                signal[valley_inc] = (low[valley] * 0.9999)
-                valley = None
-                valley_inc = 0
-                first_touch = row_id
-                signal.append(None)
-            else:
-                signal.append(None)
+        elif tmp_peak is not None and relation_operator(value, ma_20[row_id]):  #value < ma_20[row_id]:
+            peaks.append(Dimbesdombos(tmp_peak, tmp_value))
+            tmp_peak = None
+            tmp_value = None
+    # for i in peaks:
+    #    print(str(i.timestamp) + " " + str(i.value))
+    # print(peaks[len(peaks)-5:])
 
-        # völgy gyűjtés: ha van first touch és a bb_20_2 és az sma_20 között vagyunk
-        elif first_touch is not None and not value and above_sma_20[row_id]:
-            # ha még nincs völgy akkor beírjuk a gyertyat
-            if valley is None:
-                valley = row_id
-                valley_inc = inc
-                signal.append(None)
+    for i in range(0, len(peaks)-1):
+        first = peaks[i]
+        second = peaks[i+1]
+        if relation_operator(second.value, first.value):     #first.value > second.value:
+            signals.append(second)
+    # for i in signals:
+    #    print(str(i.timestamp) + " " + str(i.value))
 
-            # ha az elöző völgy magasabb mint ez a gyertya akkor frissitjük ezzel
-            elif valley is not None and low[row_id] < low[valley]:
-                valley = row_id
-                valley_inc = inc
-                signal.append(None)
-            else:
-                signal.append(None)
-            #signal.append(low[row_id] * 0.9999)
-
+    jel = []
+    dombdate = []
+    for i in signals:
+        dombdate.append(i.timestamp)
+    for row_id, value in ma_1.iteritems():
+        if row_id in dombdate:
+            jel.append(chart_operator(value, 0.001020))
         else:
-            #signal.append(high[coloumn] / 0.9999)
-            signal.append(None)
-        inc += 1
+            jel.append(None)
+    data[kicsi] = jel
+    jel_m = []
+    dombdate_m = []
+    for i in peaks:
+        dombdate_m.append(i.timestamp)
+    for row_id, value in ma_1.iteritems():
+        if row_id in dombdate_m:
+            jel_m.append(chart_operator(value, 0.001020))
+        else:
+            jel_m.append(None)
+    data[nagy] = jel_m
 
-    # for date,value in percentB.iteritems():
-    #     if value < 0 and previous >= 0:
-    #         signal.append(price[date]*0.99)
-    #     else:
-    #         signal.append(np.nan)
-    #     previous = value
-    #print(len(signal))
-    return signal
 
-
-def sc_import_data():
+def dd_import_data():
     start_time = cmd_output_start('Importing data...')
 
     global data
     data = pd.read_csv(
         test_path, usecols=['Time', 'Open', 'High', 'Low', 'Close', 'Instrument', 'Period'], sep=';',
         index_col=0, parse_dates=True).query('Period == 60')
-    data['sma_20'] = ma(data['Close'], 20)
-    for i in range(1, 4):
-        data['upper_bb_' + str(i)], data['lower_bb_' + str(i)] = bb(data['Close'], data['sma_20'], 20, i)
-
-    ema_slow = 5
-    ema_fast = 10
-
-    data['ema_2'] = data['Close'].ewm(span=ema_slow, adjust=False).mean()
-    data['ema_5'] = data['Close'].ewm(span=ema_fast, adjust=False).mean()
-
-    # true: alatta van, false: felette
-    below_bb_2 = np.where(data['Low'] <= data['lower_bb_2'], True, False)
-    above_bb_2 = np.where(data['High'] >= data['upper_bb_2'], True, False)
-    above_sma_20 = np.where((data['Close'] >= data['sma_20']) & (data['Open'] >= data['sma_20']), True, False)
-    below_sma_20 = np.where((data['Close'] <= data['sma_20']) & (data['Open'] <= data['sma_20']), True, False)
-
-
-    #print(data)
-    data["below_bb_2"] = below_bb_2
-    data["above_bb_2"] = above_bb_2
-    data["below_sma_20"] = below_sma_20
-    data["above_sma_20"] = above_sma_20
-
-    # fxdata = data.query('equal == False')
+    data['ma_20'] = ma(data['Close'], 20)
+    data['ema_200'] = ema(data['Close'], 200)
 
     # print(fxdata)
 
     # print(data)
-    data['pv'] = second_touch_upper(data)
-    print(data)
+    # print(data)
     cmd_output_end(start_time)
 
 
-def sc_make_charts(time_frames_list):
-    start_time = cmd_output_start('Initializing charts...')
 
-    # chart_to_delete = os.listdir(charts_path)
 
-    # for item in chart_to_delete:
-    # if item.endswith(".png"):
-    # os.remove(os.path.join(str(charts_path), item))
-
-    sajat_color = mpf.make_marketcolors(up='g', down='r')
-    sajat_style = mpf.make_mpf_style(marketcolors=sajat_color)
-
-    for TF in time_frames_list:
-        for instrument in instruments:
-            # print('Making chart: ' + instrument.name)
-            fxdata = data.query('Instrument == "' + instrument.name + '" and Period == ' + str(TF.value)).tail(
-                candle_count)
-            instrument.add_idosik(Idosik(TF))
-            instrument.add_data(TF, fxdata)
-
-            sma = fxdata[['sma_20']]
-            bb_1 = fxdata[['lower_bb_1', 'upper_bb_1']]
-            bb_2 = fxdata[['lower_bb_2', 'upper_bb_2']]
-            bollinger = [
-                mpf.make_addplot(sma, color='blue', linestyle='--', width=1),
-                mpf.make_addplot(bb_1, color='blue', linestyle='-.', width=1),
-                # mpf.make_addplot(bb_2, color = 'orange', linestyle = '-.', width = 1)
-            ]
-            ema_5 = fxdata[['ema_5']]
-            ema_2 = fxdata[['ema_2']]
-            colorgia = [
-                mpf.make_addplot(sma, color='blue', linestyle='--', width=1),
-                mpf.make_addplot(bb_2, color='orange', linestyle='-.', width=1),
-                # mpf.make_addplot(ema_5, color='blue', linestyle='-', width=1),
-                # mpf.make_addplot(ema_2, color='purple', linestyle='-', width=1),
-                mpf.make_addplot(fxdata[['pv']], type='scatter')
-            ]
-
-            try:
-                mpf.plot(fxdata, type='candle', style=sajat_style, addplot=colorgia,
-                         savefig=charts_path + instrument.name + "_" + TF.name + "_" + str(candle_count))
-
-            except Exception as e:
-                print(e)
-    cmd_output_end(start_time)
-
-def sc_c_make_charts(time_frames_list):
+def dd_make_charts(time_frames_list):
         start_time = cmd_output_start('Initializing charts...')
 
         # chart_to_delete = os.listdir(charts_path)
@@ -197,7 +143,7 @@ def sc_c_make_charts(time_frames_list):
             for instrument in instruments:
                 # print('Making chart: ' + instrument.name)
                 fxdata = data.query('Instrument == "' + instrument.name + '" and Period == ' + str(TF.value)).tail(1400)
-                print(fxdata)
+                #print(fxdata)
                 instrument.add_idosik(Idosik(TF))
                 instrument.add_data(TF, fxdata)
                 num_of_charts = int(fxdata['Open'].size / candle_count)
@@ -209,26 +155,38 @@ def sc_c_make_charts(time_frames_list):
                     print(str(num_of_charts) + ": " + str(min) + " - " + str(max))
                     #print(t_fxdata)
                     #print(len(t_fxdata['pv']))
-                    sma = t_fxdata[['sma_20']]
-                    bb_1 = t_fxdata[['lower_bb_1', 'upper_bb_1']]
-                    bb_2 = t_fxdata[['lower_bb_2', 'upper_bb_2']]
-                    bollinger = [
-                        mpf.make_addplot(sma, color='blue', linestyle='--', width=0.8),
-                        mpf.make_addplot(bb_1, color='navy', linestyle='-.', width=0.8),
-                        mpf.make_addplot(bb_2, color='orange', linestyle='-.', width=0.8)
-                    ]
-                    ema_5 = fxdata[['ema_5']]
-                    ema_2 = fxdata[['ema_2']]
-                    colorgia = [
-                        mpf.make_addplot(sma, color='blue', linestyle='--', width=1),
-                        mpf.make_addplot(bb_2, color='orange', linestyle='-.', width=1),
-                        # mpf.make_addplot(ema_5, color='blue', linestyle='-', width=1),
-                        # mpf.make_addplot(ema_2, color='purple', linestyle='-', width=1),
-                        mpf.make_addplot(t_fxdata[['pv']], type='scatter')
+                    ma_20 = t_fxdata[['ma_20']]
+                    ma_1_high = t_fxdata[['High']]
+                    ma_1_low = t_fxdata[['Low']]
+                    # bb_1 = t_fxdata[['lower_bb_1', 'upper_bb_1']]
+                    # bb_2 = t_fxdata[['lower_bb_2', 'upper_bb_2']]
+                    # bollinger = [
+                    #     mpf.make_addplot(ma_20, color='blue', linestyle='--', width=0.8),
+                    #     mpf.make_addplot(bb_1, color='navy', linestyle='-.', width=0.8),
+                    #     mpf.make_addplot(bb_2, color='orange', linestyle='-.', width=0.8)
+                    # ]
+                    # ema_5 = fxdata[['ema_5']]
+                    # ema_2 = fxdata[['ema_2']]
+                    # colorgia = [
+                    #     mpf.make_addplot(ma_20, color='blue', linestyle='--', width=1),
+                    #     mpf.make_addplot(bb_2, color='orange', linestyle='-.', width=1),
+                    #     # mpf.make_addplot(ema_5, color='blue', linestyle='-', width=1),
+                    #     # mpf.make_addplot(ema_2, color='purple', linestyle='-', width=1),
+                    #     mpf.make_addplot(t_fxdata[['pv']], type='scatter')
+                    # ]
+                    dimbesd = [
+                        mpf.make_addplot(ma_20, color='blue', linestyle='-', width=1.5),
+                        mpf.make_addplot(ma_1_high, color='green', linestyle='-', width=1.5),
+                        mpf.make_addplot(ma_1_low, color='red', linestyle='-', width=1.5),
+                        mpf.make_addplot(t_fxdata[['domb']], type='scatter', markersize=200, color='blue'),
+                        mpf.make_addplot(t_fxdata[['domb_m']], type='scatter', markersize=100, color='orange'),
+                        mpf.make_addplot(t_fxdata[['volgy']], type='scatter', markersize=200, color='blue'),
+                        mpf.make_addplot(t_fxdata[['volgy_m']], type='scatter', markersize=100, color='orange')
                     ]
 
                     try:
-                        mpf.plot(t_fxdata, type='candle', style=sajat_style, addplot=colorgia,
+                        mpf.plot(t_fxdata, type='candle', style=sajat_style, addplot=dimbesd,
+                                 figratio=(picture_width, picture_height),
                              savefig=charts_path + instrument.name + "_" + TF.name + "_" + str(candle_count)
                                      + "_" + str(min) + "_" + str(max) + ".png")
 
@@ -241,9 +199,10 @@ def sc_c_make_charts(time_frames_list):
 
         cmd_output_end(start_time)
 
-def sc_run():
+def dd_run():
     global instruments
     instruments = sc_get_instruments()
-    sc_import_data()
-
-    sc_c_make_charts(chart_time_frames)
+    dd_import_data()
+    dimbesdombos(True)
+    dimbesdombos(False)
+    dd_make_charts(chart_time_frames)
