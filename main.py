@@ -3,14 +3,14 @@ import os
 import time
 from datetime import datetime
 
-from constants import DATA_PATH, USED_TIMEFRAMES
+from system_components.constants import DATA_PATH, USED_TIMEFRAMES
 from dimbesdombos import dd_make_charts
-from init import get_instruments, import_data
+from system_components.init import get_instruments, import_data
 from make_message import make_email_message
-from send_email import send_email
+from system_components.send_email import send_email
 
 
-def dd_run(user, debug):
+def run(user, debug):
     start_time = time.time()
 
     instruments = get_instruments()
@@ -34,13 +34,13 @@ def check_chart_data(user, debug):
     while True:
         current_time = datetime.now().time()
         current_day = datetime.today().strftime("%A")
-        # if (current_day == off_day) & (current_time > off_time):
-        #     print('Sleeping for the weekend...')
-        #     time.sleep(172800)  # Sleep for 2 day, if time is later then 23:00 and is Friday
-        #
-        # if current_time > off_time:
-        #     print('Sleeping for an hour...')
-        #     time.sleep(3600)  # Sleep for 1 hour, if time is later then 23:00
+        if (current_day == off_day) & (current_time > off_time):
+            print('Sleeping for the weekend...')
+            time.sleep(172800)  # Sleep for 2 day, if time is later then 23:00 and is Friday
+
+        if current_time > off_time:
+            print('Sleeping for an hour...')
+            time.sleep(3600)  # Sleep for 1 hour, if time is later then 23:00
 
         try:
             update_time = os.stat(DATA_PATH).st_mtime
@@ -49,7 +49,7 @@ def check_chart_data(user, debug):
         # print(str(last_update) + " --- " + str(update_time))
         if update_time > last_update:
             last_update = update_time
-            dd_run(user, debug)
+            run(user, debug)
 
         time.sleep(15)
 

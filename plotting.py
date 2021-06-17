@@ -2,11 +2,11 @@ import operator
 
 import mplfinance as mpf
 
-from Instrument import *
-from run_timer import cmd_output_end, cmd_output_start
+from system_components.Instrument import *
+from system_components.run_timer import cmd_output_end, cmd_output_start
 from class_dimbesdombos import Dimbesdombos
-from constants import CANDLE_COUNT, PICTURE_HEIGHT, PICTURE_WIDTH, CHARTS_DIR_PATH
-from indicators import moving_average, exponential_moving_average
+from system_components.constants import CANDLE_COUNT, PICTURE_HEIGHT, PICTURE_WIDTH, CHARTS_DIR_PATH
+from system_components.indicators import moving_average, exponential_moving_average
 
 
 def dimbesdombos_for_plotting(fxdata, long, instrument, timeframe):

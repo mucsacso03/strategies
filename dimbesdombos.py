@@ -1,10 +1,10 @@
 import operator
 
 from class_dimbesdombos import Dimbesdombos
-from constants import *
-from enum_classes import *
-from indicators import *
-from run_timer import *
+from system_components.constants import *
+from system_components.enum_classes import *
+from system_components.indicators import *
+from system_components.run_timer import *
 
 
 def dimbesdombos(fxdata, long, instrument, timeframe, quiet):

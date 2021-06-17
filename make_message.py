@@ -1,4 +1,4 @@
-from run_timer import cmd_output_end, cmd_output_start
+from system_components.run_timer import cmd_output_end, cmd_output_start
 
 def make_email_message(signals_sum):
     start_time = cmd_output_start('Detecting...')

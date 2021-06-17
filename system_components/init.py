@@ -2,7 +2,7 @@ import pandas as pd
 
 from Instrument import *
 from constants import DATA_PATH
-from run_timer import *
+from system_components.run_timer import *
 
 
 def get_instruments(filename='instruments.txt'):
@@ -23,14 +23,14 @@ def get_instruments(filename='instruments.txt'):
     return instrument_list
 
 
-def import_data():
+def import_data(data_path=DATA_PATH):
     start_time = cmd_output_start('Importing data...')
 
     file_locked = True
     while file_locked:
         try:
             data = pd.read_csv(
-                DATA_PATH, usecols=['Time', 'Open', 'High', 'Low', 'Close', 'Instrument', 'Period'], sep=';',
+                data_path, usecols=['Time', 'Open', 'High', 'Low', 'Close', 'Instrument', 'Period'], sep=';',
                 index_col=0, parse_dates=True).query('Period == 60')
             file_locked = False
         except:
