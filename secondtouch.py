@@ -5,8 +5,8 @@ import pandas as pd
 from Instrument import *
 from enum_classes import *
 from indicators import *
-from run_timer import *
 from init import sc_get_instruments
+from run_timer import *
 
 path = 'C:\\Users\\David\\AppData\\Roaming\\MetaQuotes\\Terminal\\9A88166CEDA39D24B9AAA705731B4583\\MQL4\\Files\\fxprimus_data_simple.csv'
 test_path = 'C:\\Users\\David\\AppData\\Roaming\\MetaQuotes\\Terminal\\9A88166CEDA39D24B9AAA705731B4583\\MQL4\\Files\\fxprimus_data_GBPUSD_h1.csv'
@@ -18,8 +18,6 @@ candle_count = 70
 chart_time_frames = [TimeFrames.H1
                      # , TimeFrames.H1, TimeFrames.D1, TimeFrames.M30
                      ]
-
-
 
 
 def second_touch_upper(data):
@@ -35,7 +33,7 @@ def second_touch_upper(data):
     valley_inc = 0
     inc = 0
     for row_id, value in bb_2_touch.iteritems():
-        #print(str(inc) + " - " + str(valley_inc) + " - " + str(len(signal)))
+        # print(str(inc) + " - " + str(valley_inc) + " - " + str(len(signal)))
 
         # Ha a van olyan gyertya ami a sma_20 alá zár akkor már nem lehet second touch
         if not above_sma_20[row_id]:
@@ -54,7 +52,7 @@ def second_touch_upper(data):
             elif valley is not None:
                 # print(valley, end=" ")
                 # print(valley_inc)
-                #signal.append(low[valley] * 0.9999)
+                # signal.append(low[valley] * 0.9999)
                 signal[valley_inc] = (low[valley] * 0.9999)
                 valley = None
                 valley_inc = 0
@@ -78,10 +76,10 @@ def second_touch_upper(data):
                 signal.append(None)
             else:
                 signal.append(None)
-            #signal.append(low[row_id] * 0.9999)
+            # signal.append(low[row_id] * 0.9999)
 
         else:
-            #signal.append(high[coloumn] / 0.9999)
+            # signal.append(high[coloumn] / 0.9999)
             signal.append(None)
         inc += 1
 
@@ -91,7 +89,7 @@ def second_touch_upper(data):
     #     else:
     #         signal.append(np.nan)
     #     previous = value
-    #print(len(signal))
+    # print(len(signal))
     return signal
 
 
@@ -118,8 +116,7 @@ def sc_import_data():
     above_sma_20 = np.where((data['Close'] >= data['sma_20']) & (data['Open'] >= data['sma_20']), True, False)
     below_sma_20 = np.where((data['Close'] <= data['sma_20']) & (data['Open'] <= data['sma_20']), True, False)
 
-
-    #print(data)
+    # print(data)
     data["below_bb_2"] = below_bb_2
     data["above_bb_2"] = above_bb_2
     data["below_sma_20"] = below_sma_20
@@ -181,65 +178,67 @@ def sc_make_charts(time_frames_list):
                 print(e)
     cmd_output_end(start_time)
 
+
 def sc_c_make_charts(time_frames_list):
-        start_time = cmd_output_start('Initializing charts...')
+    start_time = cmd_output_start('Initializing charts...')
 
-        # chart_to_delete = os.listdir(charts_path)
+    # chart_to_delete = os.listdir(charts_path)
 
-        # for item in chart_to_delete:
-        # if item.endswith(".png"):
-        # os.remove(os.path.join(str(charts_path), item))
+    # for item in chart_to_delete:
+    # if item.endswith(".png"):
+    # os.remove(os.path.join(str(charts_path), item))
 
-        sajat_color = mpf.make_marketcolors(up='g', down='r')
-        sajat_style = mpf.make_mpf_style(marketcolors=sajat_color)
+    sajat_color = mpf.make_marketcolors(up='g', down='r')
+    sajat_style = mpf.make_mpf_style(marketcolors=sajat_color)
 
-        for TF in time_frames_list:
-            for instrument in instruments:
-                # print('Making chart: ' + instrument.name)
-                fxdata = data.query('Instrument == "' + instrument.name + '" and Period == ' + str(TF.value)).tail(1400)
-                print(fxdata)
-                instrument.add_idosik(Idosik(TF))
-                instrument.add_data(TF, fxdata)
-                num_of_charts = int(fxdata['Open'].size / candle_count)
-                for i in range(0, num_of_charts):
+    for TF in time_frames_list:
+        for instrument in instruments:
+            # print('Making chart: ' + instrument.name)
+            fxdata = data.query('Instrument == "' + instrument.name + '" and Period == ' + str(TF.value)).tail(1400)
+            print(fxdata)
+            instrument.add_idosik(Idosik(TF))
+            instrument.add_data(TF, fxdata)
+            num_of_charts = int(fxdata['Open'].size / candle_count)
+            for i in range(0, num_of_charts):
 
-                    min = 0 + i * candle_count
-                    max = 0 + candle_count + i * candle_count
-                    t_fxdata = fxdata[min: max]
-                    print(str(num_of_charts) + ": " + str(min) + " - " + str(max))
-                    #print(t_fxdata)
-                    #print(len(t_fxdata['pv']))
-                    sma = t_fxdata[['sma_20']]
-                    bb_1 = t_fxdata[['lower_bb_1', 'upper_bb_1']]
-                    bb_2 = t_fxdata[['lower_bb_2', 'upper_bb_2']]
-                    bollinger = [
-                        mpf.make_addplot(sma, color='blue', linestyle='--', width=0.8),
-                        mpf.make_addplot(bb_1, color='navy', linestyle='-.', width=0.8),
-                        mpf.make_addplot(bb_2, color='orange', linestyle='-.', width=0.8)
-                    ]
-                    ema_5 = fxdata[['ema_5']]
-                    ema_2 = fxdata[['ema_2']]
-                    colorgia = [
-                        mpf.make_addplot(sma, color='blue', linestyle='--', width=1),
-                        mpf.make_addplot(bb_2, color='orange', linestyle='-.', width=1),
-                        # mpf.make_addplot(ema_5, color='blue', linestyle='-', width=1),
-                        # mpf.make_addplot(ema_2, color='purple', linestyle='-', width=1),
-                        mpf.make_addplot(t_fxdata[['pv']], type='scatter')
-                    ]
+                min = 0 + i * candle_count
+                max = 0 + candle_count + i * candle_count
+                t_fxdata = fxdata[min: max]
+                print(str(num_of_charts) + ": " + str(min) + " - " + str(max))
+                # print(t_fxdata)
+                # print(len(t_fxdata['pv']))
+                sma = t_fxdata[['sma_20']]
+                bb_1 = t_fxdata[['lower_bb_1', 'upper_bb_1']]
+                bb_2 = t_fxdata[['lower_bb_2', 'upper_bb_2']]
+                bollinger = [
+                    mpf.make_addplot(sma, color='blue', linestyle='--', width=0.8),
+                    mpf.make_addplot(bb_1, color='navy', linestyle='-.', width=0.8),
+                    mpf.make_addplot(bb_2, color='orange', linestyle='-.', width=0.8)
+                ]
+                ema_5 = fxdata[['ema_5']]
+                ema_2 = fxdata[['ema_2']]
+                colorgia = [
+                    mpf.make_addplot(sma, color='blue', linestyle='--', width=1),
+                    mpf.make_addplot(bb_2, color='orange', linestyle='-.', width=1),
+                    # mpf.make_addplot(ema_5, color='blue', linestyle='-', width=1),
+                    # mpf.make_addplot(ema_2, color='purple', linestyle='-', width=1),
+                    mpf.make_addplot(t_fxdata[['pv']], type='scatter')
+                ]
 
-                    try:
-                        mpf.plot(t_fxdata, type='candle', style=sajat_style, addplot=colorgia,
+                try:
+                    mpf.plot(t_fxdata, type='candle', style=sajat_style, addplot=colorgia,
                              savefig=charts_path + instrument.name + "_" + TF.name + "_" + str(candle_count)
                                      + "_" + str(min) + "_" + str(max) + ".png")
 
-                    except Exception as e:
-                        print(e)
+                except Exception as e:
+                    print(e)
 
-                    # mpf.plot(t_fxdata, type='candle', style=sajat_style, addplot=colorgia,
-                    #                   savefig=charts_path + instrument.name + "_" + TF.name + "_" + str(candle_count)
-                    #                           + "_" + str(min) + "_" + str(max) + ".png")
+                # mpf.plot(t_fxdata, type='candle', style=sajat_style, addplot=colorgia,
+                #                   savefig=charts_path + instrument.name + "_" + TF.name + "_" + str(candle_count)
+                #                           + "_" + str(min) + "_" + str(max) + ".png")
 
-        cmd_output_end(start_time)
+    cmd_output_end(start_time)
+
 
 def sc_run():
     global instruments

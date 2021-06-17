@@ -1,7 +1,8 @@
-from run_timer import *
 from Instrument import *
+from run_timer import *
 
-def sc_get_instruments(filename = 'instruments.txt'):
+
+def sc_get_instruments(filename='instruments.txt'):
     start_time = cmd_output_start('Importing instruments...')
 
     file = open(filename, "r")

@@ -1,5 +1,3 @@
-
-
 def ma(data, window):
     ma = data.rolling(window=window).mean()
     return ma
@@ -20,4 +18,4 @@ def bb(data, ma, window, deviation):
 #
 #
 def ema(data, period):
-        return data.ewm(span=period, adjust=False).mean()
+    return data.ewm(span=period, adjust=False).mean()

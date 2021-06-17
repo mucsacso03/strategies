@@ -1,21 +1,18 @@
-import mplfinance as mpf
-import numpy as np
-import pandas as pd
-from pandas._libs.tslibs.timestamps import Timestamp
 import datetime as dt
-import smtplib
-import ssl
+import operator
 import os
-
+import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+
+import mplfinance as mpf
+import pandas as pd
 
 from Instrument import *
 from enum_classes import *
 from indicators import *
-from run_timer import *
 from init import sc_get_instruments
-import operator
+from run_timer import *
 
 path = 'C:\\Users\\David\\AppData\\Roaming\\MetaQuotes\\Terminal\\9A88166CEDA39D24B9AAA705731B4583\\MQL4\\Files\\fxprimus_data_simple.csv'
 test_path = 'C:\\Users\\David\\AppData\\Roaming\\MetaQuotes\\Terminal\\9A88166CEDA39D24B9AAA705731B4583\\MQL4\\Files\\fxprimus_data_GBPUSD_h1.csv'
@@ -217,7 +214,7 @@ def dimbesdombos_for_plotting(fxdata, long, instrument, timeframe):
 
 
 def dimbesdombos(fxdata, long, instrument, timeframe):
-    #start_time = cmd_output_start('Calculating DimbesDombos...')
+    # start_time = cmd_output_start('Calculating DimbesDombos...')
 
     peak_or_valleys = []
     signals = []
@@ -294,12 +291,13 @@ def dimbesdombos(fxdata, long, instrument, timeframe):
 
     # Kis dombok/volgyek kiválasztása
     for i in range(len(peak_or_valleys) - 2, len(peak_or_valleys) - 1):
-        first = peak_or_valleys[i]
-        second = peak_or_valleys[i + 1]
-        if relation_operator(second.value, first.value):  # first.value > second.value:
-            signals.append(second)
+        if len(peak_or_valleys) == 2:
+            first = peak_or_valleys[i]
+            second = peak_or_valleys[i + 1]
+            if relation_operator(second.value, first.value):  # first.value > second.value:
+                signals.append(second)
 
-    #cmd_output_end(start_time)
+    # cmd_output_end(start_time)
     # print(signals)
     return signals
 
