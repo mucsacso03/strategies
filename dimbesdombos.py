@@ -7,8 +7,8 @@ from indicators import *
 from run_timer import *
 
 
-def dimbesdombos(fxdata, long, instrument, timeframe):
-    # start_time = cmd_output_start('Calculating DimbesDombos...')
+def dimbesdombos(fxdata, long, instrument, timeframe, quiet):
+    if not quiet: start_time = cmd_output_start('Calculating DimbesDombos for ' + instrument + '...')
 
     peak_or_valleys = []
     signals = []
@@ -91,12 +91,15 @@ def dimbesdombos(fxdata, long, instrument, timeframe):
             if relation_operator(second.value, first.value):  # first.value > second.value:
                 signals.append(second)
 
-    # cmd_output_end(start_time)
+    if not quiet: cmd_output_end(start_time)
     # print(signals)
     return signals
 
 
-def dd_make_charts(time_frames_list, instruments, data):
+
+
+
+def dd_make_charts(time_frames_list, instruments, data, quiet):
     start_time = cmd_output_start('Initializing charts...')
 
     signals = []
@@ -109,8 +112,8 @@ def dd_make_charts(time_frames_list, instruments, data):
             fxdata['ma_20'] = ma(fxdata['Close'], 20)
             fxdata['ema_200'] = ema(fxdata['Close'], 200)
 
-            signals.append(dimbesdombos(fxdata, True, instrument.name, TF))
-            signals.append(dimbesdombos(fxdata, False, instrument.name, TF))
+            signals.append(dimbesdombos(fxdata, True, instrument.name, TF, quiet))
+            signals.append(dimbesdombos(fxdata, False, instrument.name, TF, quiet))
 
     cmd_output_end(start_time)
 

@@ -6,7 +6,8 @@ from datetime import datetime
 from constants import DATA_PATH, USED_TIMEFRAMES
 from dimbesdombos import dd_make_charts
 from init import sc_get_instruments, dd_import_data
-from send_email import send_email, make_email_message
+from send_email import send_email
+from make_message import make_email_message
 
 
 def dd_run(user, debug):
@@ -14,10 +15,12 @@ def dd_run(user, debug):
 
     instruments = sc_get_instruments()
     data = dd_import_data()
+
     # dd_make_charts_for_plotting(chart_time_frames)
-    signals = dd_make_charts(USED_TIMEFRAMES, instruments, data)
+    signals = dd_make_charts(USED_TIMEFRAMES, instruments, data, quiet = True)
+
     message, new_signal = make_email_message(signals)
-    if new_signal: send_email(user, debug, message)
+    if new_signal: send_email(message, "MT dimbes-dombos", user, debug)
 
     print("--- Total runtime: %s seconds ---" % (time.time() - start_time))
 
