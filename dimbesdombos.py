@@ -24,7 +24,9 @@ chart_time_frames = [TimeFrames.H1
                      ]
 class Dimbesdombos():
 
-    def __init__(self, timestamp, value, orientaton, first_crossing_timestamp, second_crossing_timestamp):
+    def __init__(self,instrument, timeframe, timestamp, value, orientaton, first_crossing_timestamp, second_crossing_timestamp):
+        self.instrument = instrument
+        self.timeframe = timeframe
         self.peak_timestamp = timestamp
         self.value = value
         self.sector_trend = None
@@ -34,7 +36,7 @@ class Dimbesdombos():
         self.orientation = orientaton
 
 
-def dimbesdombos(fxdata ,long):
+def dimbesdombos_for_plotting(fxdata ,long, instrument, timeframe):
     start_time = cmd_output_start('Calculating DimbesDombos...')
 
     peak_or_valleys = []
@@ -100,7 +102,7 @@ def dimbesdombos(fxdata ,long):
             #     elif first_ema_200_value < second_ema_200_value:
             #         trend = Trend.Long
 
-            peak_or_valleys.append(Dimbesdombos(tmp_peak, tmp_value, orientation, tmp_first_crossing, row_id))
+            peak_or_valleys.append(Dimbesdombos(instrument, timeframe, tmp_peak, tmp_value, orientation, tmp_first_crossing, row_id))
             tmp_peak = None
             tmp_value = None
             tmp_first_crossing = None
@@ -133,9 +135,6 @@ def dimbesdombos(fxdata ,long):
 
 
 
-
-
-
     # for i in peak_or_valleys:
     #    print(str(i.timestamp) + " " + str(i.value))
     # print(peak_or_valleys[len(peak_or_valleys)-5:])
@@ -149,7 +148,7 @@ def dimbesdombos(fxdata ,long):
             signals.append(second)
             
             
-            
+    signals = signals[-1:]
     # for i in signals:
     #    print(str(i.timestamp) + " " + str(i.value))
 
@@ -211,6 +210,94 @@ def dimbesdombos(fxdata ,long):
 
     return fxdata
 
+def dimbesdombos(fxdata ,long, instrument, timeframe):
+    start_time = cmd_output_start('Calculating DimbesDombos...')
+
+    peak_or_valleys = []
+    signals = []
+    ma_20 = fxdata['ma_20']
+    ema_200 = fxdata['ema_200']
+    trend_candle_number = 150
+
+    # lt(a,b) = a < b
+    # gt(a,b) = a > b
+    if long:
+        ma_1 = fxdata['High']
+        relation_operator = operator.lt
+
+    else:
+        ma_1 = fxdata['Low']
+        relation_operator = operator.gt
+
+    tmp_peak = None
+    tmp_first_crossing = None
+    tmp_value = None
+    init = True
+    for row_id, value in ma_1.iteritems():
+        # Ha kezdésnek az ma_20 felett van akkor megvárjuk míg alá megy
+        if init and relation_operator(value,ma_20[row_id]):    #(value < ma_20[row_id]):
+            init = False
+
+        elif relation_operator(ma_20[row_id], value):   #value > ma_20[row_id]:
+            if tmp_peak is None:
+                tmp_peak = row_id
+                tmp_value = value
+                tmp_first_crossing = row_id
+            elif tmp_peak is not None and relation_operator(ma_1[tmp_peak], value):      #(ma_1[tmp_peak] < value):
+                tmp_peak = row_id
+                tmp_value = value
+
+        elif tmp_peak is not None and relation_operator(value, ma_20[row_id]):  #value < ma_20[row_id]:
+            if long:
+                orientation = Trend.Long
+            else:
+                orientation = Trend.Short
+            peak_or_valleys.append(Dimbesdombos(instrument, timeframe, tmp_peak, tmp_value, orientation, tmp_first_crossing, row_id))
+            tmp_peak = None
+            tmp_value = None
+            tmp_first_crossing = None
+
+
+    # első szűrés. x gyertyával visszanézni a ema_200 irányultságát
+    for dd in peak_or_valleys:
+        second_crossing_index = fxdata.index.get_loc(dd.second_crossing_timestamp)
+        second_crossing_value = ema_200[dd.second_crossing_timestamp]
+        previous_trend_candle_index = second_crossing_index - trend_candle_number
+        if previous_trend_candle_index > 0:
+            previous_trend_candle_value = fxdata[previous_trend_candle_index : previous_trend_candle_index+1]['ema_200'][0]
+        else:
+            previous_trend_candle_value = None
+
+        if previous_trend_candle_value is not None:
+            if previous_trend_candle_value > second_crossing_value:
+                dd.trend = Trend.Short
+            if previous_trend_candle_value < second_crossing_value:
+                dd.trend = Trend.Long
+
+
+    for i in range(0, len(peak_or_valleys)-1):
+        first = peak_or_valleys[i]
+        second = peak_or_valleys[i + 1]
+        first_crossing_value = ema_200[first.first_crossing_timestamp]
+        second_crossing_value = ema_200[second.second_crossing_timestamp]
+        if first_crossing_value > second_crossing_value:
+            second.sector_trend = Trend.Short
+        if first_crossing_value < second_crossing_value:
+            second.sector_trend = Trend.Long
+
+
+    # Kis dombok/volgyek kiválasztása
+    for i in range(0, len(peak_or_valleys)-1):
+        first = peak_or_valleys[i]
+        second = peak_or_valleys[i+1]
+        if relation_operator(second.value, first.value):     #first.value > second.value:
+            signals.append(second)
+
+
+    cmd_output_end(start_time)
+    # print(signals)
+    return signals[:-1]
+
 
 
 def dd_import_data():
@@ -231,8 +318,10 @@ def dd_import_data():
 
 
 
-def dd_make_charts(time_frames_list):
+def dd_make_charts_for_plotting(time_frames_list):
         start_time = cmd_output_start('Initializing charts...')
+
+
 
         # chart_to_delete = os.listdir(charts_path)
 
@@ -250,8 +339,8 @@ def dd_make_charts(time_frames_list):
                 fxdata['ma_20'] = ma(fxdata['Close'], 20)
                 fxdata['ema_200'] = ema(fxdata['Close'], 200)
 
-                fxdata = dimbesdombos(fxdata, True)
-                fxdata = dimbesdombos(fxdata, False)
+                fxdata = dimbesdombos_for_plotting(fxdata, True, instrument.name, TF)
+                fxdata = dimbesdombos_for_plotting(fxdata, False, instrument.name, TF)
 
 
 
@@ -323,8 +412,45 @@ def dd_make_charts(time_frames_list):
 
         cmd_output_end(start_time)
 
+def dd_make_charts(time_frames_list):
+        start_time = cmd_output_start('Initializing charts...')
+
+        signals = []
+
+        for TF in time_frames_list:
+            for instrument in instruments:
+                # print('Making chart: ' + instrument.name)
+                fxdata = data.query('Instrument == "' + instrument.name + '" and Period == ' + str(TF.value)).tail(candle_count)
+                fxdata['ma_20'] = ma(fxdata['Close'], 20)
+                fxdata['ema_200'] = ema(fxdata['Close'], 200)
+
+                signals.append(dimbesdombos(fxdata, True, instrument.name, TF))
+                signals.append(dimbesdombos(fxdata, False, instrument.name, TF))
+
+        cmd_output_end(start_time)
+
+        return signals
+
+def detection(signals_sum):
+    trendirany = []
+    korrekcio = []
+    for signals in signals_sum:
+        for signal in signals:
+            if signal.orientation == signal.trend and signal.orientation == signal.sector_trend:
+                trendirany.append(signal)
+            else:
+                korrekcio.append(signal)
+
+    str_trendirany = "Trendiranyu dimbesdombos\n\n"
+    for signal in trendirany:
+        str_trendirany = str_trendirany + signal.instrument + " - " + signal.timeframe.name + ": " \
+                         + signal.orientation.name + " " + str(signal.peak_timestamp) + " " + str(signal.value) \
+                         + "\n"
+    print(str_trendirany)
 def dd_run():
     global instruments
     instruments = sc_get_instruments()
     dd_import_data()
-    dd_make_charts(chart_time_frames)
+    dd_make_charts_for_plotting(chart_time_frames)
+    #signals = dd_make_charts(chart_time_frames)
+    # detection(signals)
