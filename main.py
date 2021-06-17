@@ -1,10 +1,12 @@
-from dimbesdombos import dd_run
+from dimbesdombos import check_chart_data
 
 
 
 
 if __name__ == '__main__':
-    dd_run()
+    user = False
+    debug = False
+    check_chart_data(user, debug)
 
 
 
