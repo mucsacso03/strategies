@@ -15,7 +15,7 @@ def send_email(mail_content, subject, user=False, debug=True):
         yes = 'y'
     if yes == 'y':
 
-        file = open('../sender_cred.txt', "r")
+        file = open('sender_cred.txt', "r")
         credentials = file.read().split("\n")
         file.close()
         if len(credentials) > 2: print('Broken sender_cred.txt: too much line')

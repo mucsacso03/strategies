@@ -109,7 +109,7 @@ def trend_between_big_and_small_dd(peak_or_valleys, ema_200):
 def select_signals(peak_or_valleys, relation_operator):
     signals = []
     for i in range(len(peak_or_valleys) - 2, len(peak_or_valleys) - 1):
-        if len(peak_or_valleys) == 2:
+        #if len(peak_or_valleys) == 2:
             first = peak_or_valleys[i]
             second = peak_or_valleys[i + 1]
             if relation_operator(second.value, first.value):  # first.value > second.value:

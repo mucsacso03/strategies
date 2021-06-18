@@ -1,7 +1,7 @@
 import pandas as pd
 
 from system_components.Instrument import *
-from system_components.constants import DATA_PATH
+from system_components.constants import DATA_PATH, TEST_DATA_PATH
 from system_components.run_timer import *
 
 
@@ -11,7 +11,7 @@ def get_instruments(filename='instruments.txt'):
     file = open(filename, "r")
     content = file.read().split("\n")
 
-    # content = ["GBPUSD"]
+    #content = ["GBPUSD"]
 
     instrument_list = []
     for inst in content:

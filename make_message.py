@@ -2,12 +2,12 @@ from system_components.run_timer import cmd_output_end, cmd_output_start
 
 def make_email_message(signals_sum):
     start_time = cmd_output_start('Detecting...')
-
     trendirany = []
     korrekcio = []
     for signals in signals_sum:
         for signal in signals:
             if signal.orientation == signal.trend and signal.orientation == signal.sector_trend:
+
                 trendirany.append(signal)
             else:
                 korrekcio.append(signal)
@@ -38,10 +38,10 @@ def make_email_message(signals_sum):
 
     cmd_output_end(start_time)
 
-    str_korrekcio = "Korrekcios dimbesdombos\n\n"
-    for signal in korrekcio:
-        str_korrekcio = str_korrekcio + signal.instrument + " - " + signal.timeframe.name + ": " \
-                        + signal.orientation.name + " " + str(signal.peak_timestamp) + " " + str(signal.value) \
-                        + "\n"
-    print(str_korrekcio)
+    # str_korrekcio = "Korrekcios dimbesdombos\n\n"
+    # for signal in korrekcio:
+    #     str_korrekcio = str_korrekcio + signal.instrument + " - " + signal.timeframe.name + ": " \
+    #                     + signal.orientation.name + " " + str(signal.peak_timestamp) + " " + str(signal.value) \
+    #                     + "\n"
+    # print(str_korrekcio)
     return str_trendirany, new_signal

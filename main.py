@@ -8,7 +8,7 @@ from dimbesdombos import dd_make_charts
 from system_components.init import get_instruments, import_data
 from make_message import make_email_message
 from system_components.send_email import send_email
-
+from plotting import dd_make_charts_for_plotting
 
 def run(user, debug):
     start_time = time.time()
@@ -16,7 +16,7 @@ def run(user, debug):
     instruments = get_instruments()
     data = import_data()
 
-    # dd_make_charts_for_plotting(chart_time_frames)
+    #dd_make_charts_for_plotting(USED_TIMEFRAMES, instruments, data)
     signals = dd_make_charts(USED_TIMEFRAMES, instruments, data, quiet=True)
 
     message, new_signal = make_email_message(signals)
