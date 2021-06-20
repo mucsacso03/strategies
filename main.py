@@ -44,11 +44,6 @@ def check_chart_data(user, debug):
                     datetime.combine(date.today(), off_time)).total_seconds()
             time.sleep(sleep_seconds_until_midnight + 3601)  # Sleep for until 01:00 AM, if time is later then 22:00
 
-        vmi = datetime.combine(date.today(), dt.time(23, 59, 59)) - datetime.combine(date.today(), off_time)
-        print(vmi)
-        print(vmi.total_seconds() + 3601)
-        print(dt.timedelta(seconds=(vmi.total_seconds() + 3601)))
-        # print(dt.time(24,0,0))
         try:
             update_time = os.stat(DATA_PATH).st_mtime
         except:
@@ -56,7 +51,7 @@ def check_chart_data(user, debug):
         # print(str(last_update) + " --- " + str(update_time))
         if update_time > last_update:
             last_update = update_time
-            # run(user, debug)
+            run(user, debug)
 
         time.sleep(15)
 
