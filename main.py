@@ -7,6 +7,7 @@ from dimbesdombos import dd_make_charts
 from make_message import make_email_message
 from system_components.constants import DATA_PATH, USED_TIMEFRAMES
 from system_components.init import get_instruments, import_data
+from system_components.send_email import send_email
 
 
 def run(user, debug):
@@ -19,7 +20,7 @@ def run(user, debug):
     signals = dd_make_charts(USED_TIMEFRAMES, instruments, data, quiet=True)
 
     message, new_signal = make_email_message(signals)
-    # if new_signal: send_email(message, "MT dimbes-dombos", user, debug)
+    if new_signal: send_email(message, "MT dimbes-dombos", user, debug)
 
     print("--- Total runtime: %s seconds ---" % (time.time() - start_time))
 
