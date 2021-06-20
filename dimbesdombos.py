@@ -10,6 +10,9 @@ from system_components.run_timer import *
 def dimbesdombos(fxdata, long, instrument, timeframe, quiet):
     if not quiet: start_time = cmd_output_start('Calculating DimbesDombos for ' + instrument + '...')
 
+    # Utolsó gyertát nem vizsgáljuk mert nincs bezárva
+    fxdata = fxdata[:-1]
+
     peak_or_valleys = []
     ma_20 = fxdata['ma_20']
     ema_200 = fxdata['ema_200']
