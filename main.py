@@ -20,7 +20,7 @@ def run(user, debug):
     signals = dd_make_charts(USED_TIMEFRAMES, instruments, data, quiet=True)
 
     message, new_signal = make_email_message(signals)
-    if new_signal: send_email(message, "MT dimbes-dombos", user, debug)
+    #if new_signal: send_email(message, "MT dimbes-dombos", user, debug)
 
     print("--- Total runtime: %s seconds ---" % (time.time() - start_time))
 

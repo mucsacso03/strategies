@@ -13,28 +13,27 @@ def make_email_message(signals_sum):
                 korrekcio.append(signal)
 
     with open('previous_mail.txt', "r") as file:
-        previous_mail = file.read()
+        previous_signals = file.read()
 
     new_signal = False
-    str_trendirany = "Trendiranyu dimbesdombos\n\n"
-    str_not_changed_signals = str_trendirany
+    str_message = "Trendiranyu dimbesdombos\n\n"
+    str_trendirany = ""
     for signal in trendirany:
         signal_str = signal.instrument + " - " + signal.timeframe.name + ": " \
                      + signal.orientation.name + "\t\t|\t\t" + str(signal.peak_timestamp) + " - " + str(signal.value) \
                      + "\n"
-        if signal_str in previous_mail:
-            str_not_changed_signals = str_not_changed_signals + signal_str
-        else:
-            str_not_changed_signals = str_not_changed_signals + signal_str
+        if signal_str not in previous_signals:
             str_trendirany = str_trendirany + signal_str
             new_signal = True
 
     print("\nMail content:\n\n" + str_trendirany)
 
-    with open('previous_mail.txt', "w") as file:
-        file.write(str_not_changed_signals)
+    with open('previous_mail.txt', "a+") as file:
+        file.write(str_trendirany)
 
     file.close()
+
+    str_message = str_message + str_trendirany
 
     cmd_output_end(start_time)
 
@@ -44,4 +43,4 @@ def make_email_message(signals_sum):
     #                     + signal.orientation.name + " " + str(signal.peak_timestamp) + " " + str(signal.value) \
     #                     + "\n"
     # print(str_korrekcio)
-    return str_trendirany, new_signal
+    return str_message, new_signal
