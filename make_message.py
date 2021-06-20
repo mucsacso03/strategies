@@ -26,7 +26,10 @@ def make_email_message(signals_sum):
             str_trendirany = str_trendirany + signal_str
             new_signal = True
 
-    print("\nMail content:\n\n" + str_trendirany)
+    if str_trendirany != "":
+        print("\nMail content:\n\n" + str_trendirany)
+    else:
+        print("No new signals detected", end=" ")
 
     with open('previous_mail.txt', "a+") as file:
         file.write(str_trendirany)
